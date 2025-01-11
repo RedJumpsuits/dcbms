@@ -59,7 +59,6 @@ function Admin() {
       console.log("Checking admin status for account:", account);
       
       const contract = await getContract(true);
-      console.log("Contract instance:", contract);
       
       const adminAddress = await contract.getAdminAddress();
       const provider = await getProvider();
@@ -150,7 +149,7 @@ function Admin() {
   }
 
   return (
-    <div className="mt-20">
+    <div className="mt-20 px-32">
       <h1 className="text-4xl font-bold">Welcome to the admin page</h1>
       <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
         <Card>
