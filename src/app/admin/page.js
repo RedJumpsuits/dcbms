@@ -7,11 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Plus, Loader2 } from "lucide-react";
 import { MetaMaskContext } from "@/context/MetaMaskContext";
+import { ethers } from "ethers";
 
 function Admin() {
+  // Environment variables for contract configuration
   const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
-  const CONTRACT_ABI = process.env.NEXT_PUBLIC_ABI;
+  const CONTRACT_ABI = JSON.parse(process.env.NEXT_PUBLIC_ABI || "[]");
 
+  // State management
   const { account, connectToMetaMask } = useContext(MetaMaskContext);
   const [venueName, setVenueName] = useState("");
   const [capacity, setCapacity] = useState("");
@@ -21,8 +24,28 @@ function Admin() {
   const [venues, setVenues] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Initialize provider outside of functions for reuse
+  const getProvider = async () => {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      throw new Error("MetaMask is not installed");
+    }
+    return new ethers.BrowserProvider(window.ethereum);
+  };
+
+  // Get contract instance helper function
+  const getContract = async (withSigner = false) => {
+    const provider = await getProvider();
+    if (withSigner) {
+      const signer = await provider.getSigner();
+      return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    }
+    return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  };
+
+  // Check admin status when account changes
   useEffect(() => {
     if (account) {
+      console.log("Account detected:", account);
       checkAdminStatus(account);
       loadVenues();
     }
@@ -33,35 +56,33 @@ function Admin() {
       if (!account) {
         throw new Error("Please connect to MetaMask to use this application");
       }
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        CONTRACT_ABI,
-        signer
-      );
-      console.log(contract)
+      console.log("Checking admin status for account:", account);
+      
+      const contract = await getContract(true);
+      console.log("Contract instance:", contract);
+      
       const adminAddress = await contract.getAdminAddress();
+      const provider = await getProvider();
+      const signer = await provider.getSigner();
       const currentAddress = await signer.getAddress();
-
+      
+      console.log("Admin address:", adminAddress);
+      console.log("Current address:", currentAddress);
 
       setIsAdmin(adminAddress.toLowerCase() === currentAddress.toLowerCase());
     } catch (error) {
+      console.error("Error checking admin status:", error);
       setError(error.message);
     }
   };
 
   const loadVenues = async () => {
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        CONTRACT_ABI,
-        provider
-      );
+      const contract = await getContract();
       const venueList = await contract.getAllVenues();
       setVenues(venueList);
     } catch (err) {
+      console.error("Error loading venues:", err);
       setError("Failed to load venues: " + err.message);
     }
   };
@@ -81,14 +102,7 @@ function Admin() {
         throw new Error("Capacity must be greater than zero");
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        CONTRACT_ABI,
-        signer
-      );
-
+      const contract = await getContract(true);
       const tx = await contract.addVenue(venueName, capacity);
       await tx.wait();
 
@@ -97,11 +111,29 @@ function Admin() {
       setCapacity("");
       loadVenues();
     } catch (err) {
+      console.error("Error adding venue:", err);
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (!account) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto mt-20">
+        <CardContent className="p-6">
+          <Alert>
+            <AlertDescription>
+              Please connect your MetaMask wallet to access the admin dashboard.
+            </AlertDescription>
+          </Alert>
+          <Button onClick={connectToMetaMask} className="mt-4">
+            Connect Wallet
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!isAdmin) {
     return (

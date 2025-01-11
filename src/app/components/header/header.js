@@ -24,7 +24,7 @@ export default function Header() {
             {isConnecting ? "Connecting..." : "Connect to MetaMask"}
           </Button>
         )}
-        {account && <div>Account Connected</div>}
+        {account && <div>Account Connected: {account}</div>}
       </div>
     </div>
   );
