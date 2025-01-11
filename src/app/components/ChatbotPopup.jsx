@@ -11,10 +11,10 @@ export default function ChatbotPopup() {
   return (
     <div className="fixed bottom-4 right-4">
       {isOpen ? (
-        <Card className="flex flex-col w-[50vh]">
+        <Card className="flex flex-col w-[25vw] h-[50vh]">
           <div className="flex justify-between items-center p-4 border-b">
             <h2 className="text-lg font-semibold">Chatbot</h2>
-            <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
+            <Button variant="ghost" size="xl" onClick={() => setIsOpen(false)}>
               Close
             </Button>
           </div>
