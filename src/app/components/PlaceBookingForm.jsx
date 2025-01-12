@@ -44,6 +44,9 @@ const formSchema = z.object({
   startDateTime: z.date({
     required_error: "Please select a start date and time.",
   }),
+  hour: z.bigint({
+    required_error: "Please select a time slot.",
+  }),
 });
 
 export default function PlaceBookingForm(props) {
@@ -66,11 +69,10 @@ export default function PlaceBookingForm(props) {
   const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
   const CONTRACT_ABI = JSON.parse(process.env.NEXT_PUBLIC_ABI || "[]");
   const { account, connectToMetaMask } = useContext(MetaMaskContext);
-  const [startDate, setStartDate] = useState();
   const [startOpen, setStartOpen] = useState(false);
   const [slots, setSlots] = useState();
-  const [hour, setHour] = useState();
-  const [error, setError] = useState();
+  const [loading, setLoading] = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -81,44 +83,43 @@ export default function PlaceBookingForm(props) {
   });
 
   const loadSlots = async (venueId, day) => {
+    setSlotsLoading(true);
+    setSlots(null);
     try {
       const contract = await getContract(true);
-      const { timeSlots, bookedSlots, remainingSlots } =
+      const { timeSlots, bookedSlots, remainingSlots, userBookedAny } =
         await contract.getDailyBookings(venueId, day);
 
-      setSlots({ timeSlots, bookedSlots, remainingSlots });
+      setSlots({ timeSlots, bookedSlots, remainingSlots, userBookedAny });
       console.log(
         `ts ${timeSlots}, \nbs ${bookedSlots}, \nrs${remainingSlots}`
       );
-      console.log(timeSlots);
     } catch (error) {
       console.log(error);
     }
+    setSlotsLoading(false);
   };
 
   const createBooking = async (values) => {
     try {
+      setLoading(true);
       const contract = await getContract(true);
       const tx = await contract.createBooking(
         venues.findIndex((venue) => venue.name === values.venue),
         values.startDateTime.getTime() / 1000,
-        hour,
-        {value: parseEther("0.0005")}
+        values.hour,
+        { value: parseEther("0.0005") }
       );
-      tx.console.log(await tx.wait());
+      console.log(await tx.wait());
     } catch (err) {
       console.error("Error placing booking:", err);
-      setError("Failed to place booking: " + err.message);
     }
+    setLoading(false);
   };
 
   function onSubmit(values) {
-    console.log("here");
-
-    createBooking(values);
-
-    // Here you would typically send this data to your backend
-    alert("Booking submitted! Check the console for details.");
+    console.log(values);
+    // createBooking(values);
   }
 
   return (
@@ -126,9 +127,7 @@ export default function PlaceBookingForm(props) {
       <Form {...form}>
         <form
           onSubmit={(e) => {
-            console.log("submitting form");
             form.handleSubmit(onSubmit, (errors) => console.log(errors))();
-            // form.handleSubmit();
             e.preventDefault();
           }}
           className="space-y-8"
@@ -140,7 +139,12 @@ export default function PlaceBookingForm(props) {
               <FormItem>
                 <FormLabel>Venue</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    form.resetField("startDateTime");
+                    form.resetField("hour");
+                    setSlots(null);
+                    field.onChange(value);
+                  }}
                   defaultValue={field.value}
                 >
                   <FormControl>
@@ -182,7 +186,7 @@ export default function PlaceBookingForm(props) {
                       )}
                     >
                       <CalendarIcon />
-                      {startDate ? (
+                      {field.value ? (
                         format(field.value, "PPP")
                       ) : (
                         <span>Pick a date</span>
@@ -192,7 +196,7 @@ export default function PlaceBookingForm(props) {
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={startDate}
+                      selected={new Date(field.value)}
                       disabled={(date) => {
                         var now = new Date();
                         now.setMilliseconds(0);
@@ -210,8 +214,8 @@ export default function PlaceBookingForm(props) {
                           ),
                           date.getTime() / 1000
                         );
-                        setStartDate(date);
                         setStartOpen(false);
+                        form.resetField("hour");
                         if (date) {
                           const dateTime = new Date(date);
                           field.onChange(dateTime);
@@ -227,33 +231,55 @@ export default function PlaceBookingForm(props) {
               </FormItem>
             )}
           />
-
-          {slots && (
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              {slots.timeSlots.map((slot, index) => (
-                <Card
-                  style={{ cursor: "pointer" }}
-                  className={`p-0 ${hour == slot ? "bg-green-400" : ""}`}
-                  key={index}
-                  onClick={() => {
-                    setHour(slot);
-                    console.log(slot);
-                  }}
-                >
-                  <CardHeader>
-                    <CardTitle>
-                      {slots.remainingSlots[index]} /{" "}
-                      {slots.remainingSlots[index] + slots.bookedSlots[index]}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {tConvert(slot.toString().padStart(2, "0"))}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-          <Button type="submit">Book Place</Button>
+          <FormField
+            control={form.control}
+            name="hour"
+            render={({ field }) => (
+              <>
+                {slots && (
+                  <div className="flex flex-wrap items-center justify-center gap-4">
+                    {slots.timeSlots.map((slot, index) => (
+                      <Card
+                        style={{ cursor: "pointer" }}
+                        className={`p-0 ${
+                          field.value == slot ? "bg-green-400" : ""
+                        } ${slots.userBookedAny[index] ? "bg-gray-400" : ""}`}
+                        key={index}
+                        onClick={
+                          slots.userBookedAny[index]
+                            ? () => {
+                                alert("You have already booked this slot");
+                              }
+                            : () => {
+                                if (field.value == slot) {
+                                  field.onChange(null);
+                                } else {
+                                  field.onChange(slot);
+                                }
+                              }
+                        }
+                      >
+                        <CardHeader>
+                          <CardTitle>
+                            {slots.remainingSlots[index]} /{" "}
+                            {slots.remainingSlots[index] +
+                              slots.bookedSlots[index]}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {tConvert(slot.toString().padStart(2, "0"))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          />
+          {slotsLoading ? <div>Loading slots...</div> : <></>}
+          <Button type="submit" disabled={loading}>
+            {loading ? "Booking" : "Book"}
+          </Button>
         </form>
       </Form>
     </div>

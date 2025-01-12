@@ -82,31 +82,12 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="container flex justify-center items-center w-full mx-auto pt-20 p-4">
+    <div className="container flex justify-center items-center w-full h-[100vh] mx-auto pt-20 p-4">
       <Card className="p-8 w-[80vh]">
         <CardHeader>
           <CardTitle>Book a venue</CardTitle>
         </CardHeader>
-
         {venues.length === 0 ? <></> : <PlaceBookingForm venueList={venues} />}
-        <CardContent>
-          <div className="space-y-4">
-            {venues.map((venue, index) => (
-              <div key={index} className="p-4">
-                <div className="font-medium">{venue.name}</div>
-                <div className="text-sm text-gray-500">
-                  Capacity: {venue.capacity.toString()}
-                </div>
-                <div className="text-sm text-gray-500">
-                  Status: {venue.isActive ? "Active" : "Inactive"}
-                </div>
-              </div>
-            ))}
-            {venues.length === 0 && (
-              <div className="text-gray-500 text-center">No venues found</div>
-            )}
-          </div>
-        </CardContent>
       </Card>
     </div>
   );
