@@ -8,6 +8,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Plus, Loader2 } from "lucide-react";
 import { MetaMaskContext } from "@/context/MetaMaskContext";
 import { ethers } from "ethers";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 function Admin() {
   // Environment variables for contract configuration
@@ -19,14 +28,19 @@ function Admin() {
   const [venueName, setVenueName] = useState("");
   const [capacity, setCapacity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [error2, setError2] = useState("");
   const [success, setSuccess] = useState("");
   const [venues, setVenues] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [userAddress, setUserAddress] = useState("");
+  const [users, setUsers] = useState([]);
 
   // Initialize provider outside of functions for reuse
   const getProvider = async () => {
-    if (typeof window === 'undefined' || !window.ethereum) {
+    if (typeof window === "undefined" || !window.ethereum) {
       throw new Error("MetaMask is not installed");
     }
     return new ethers.BrowserProvider(window.ethereum);
@@ -57,14 +71,14 @@ function Admin() {
         throw new Error("Please connect to MetaMask to use this application");
       }
       console.log("Checking admin status for account:", account);
-      
+
       const contract = await getContract(true);
-      
+
       const adminAddress = await contract.getAdminAddress();
       const provider = await getProvider();
       const signer = await provider.getSigner();
       const currentAddress = await signer.getAddress();
-      
+
       console.log("Admin address:", adminAddress);
       console.log("Current address:", currentAddress);
 
@@ -80,6 +94,22 @@ function Admin() {
       const contract = await getContract();
       const venueList = await contract.getAllVenues();
       setVenues(venueList);
+      console.log(venueList);
+    } catch (err) {
+      console.error("Error loading venues:", err);
+      setError("Failed to load venues: " + err.message);
+    }
+  };
+
+  const loadUsersByName = async (name) => {
+    try {
+      const contract = await getContract();
+      const userList = await contract.getUsersByName(name);
+
+      console.log(userList);
+
+      console.log(userList);
+      setUsers(userList);
     } catch (err) {
       console.error("Error loading venues:", err);
       setError("Failed to load venues: " + err.message);
@@ -133,6 +163,66 @@ function Admin() {
       </Card>
     );
   }
+
+  const handleRemoveFlag = async (address) => {
+    try {
+      setLoading(true);
+      setError("");
+      setSuccess("");
+
+      if (!address) {
+        throw new Error("Please enter a user address");
+      }
+
+      const contract = await getContract(true);
+
+      // Call the smart contract function to remove flag
+      await contract.removeDamageFlag(address);
+      setSuccess(`Successfully removed flag from user ${address}`);
+      setUserAddress("");
+    } catch (err) {
+      setError(err.message || "Failed to remove user flag");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchUser = async (name) => {
+    await loadUsersByName(name);
+
+    if (userName.trim()) {
+      const user = users.find((user) =>
+        user.name.toLowerCase().includes(userName.toLowerCase())
+      );
+      if (user) {
+        setUserAddress(user.address);
+      } else {
+        setError2("User not found");
+      }
+    }
+  };
+
+  const handleFlagUser = async (address) => {
+    try {
+      setLoading(true);
+      setError("");
+      setSuccess("");
+
+      if (!address) {
+        throw new Error("Please enter a user address");
+      }
+
+      const contract = await getContract(true);
+      // Call the smart contract function to flag user
+      await contract.flagDamagedProperty(address);
+      setSuccess(`Successfully flagged user ${address}`);
+      setUserAddress("");
+    } catch (err) {
+      setError(err.message || "Failed to flag user");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!isAdmin) {
     return (
@@ -188,7 +278,7 @@ function Admin() {
 
             {error && (
               <Alert variant="destructive" className="mt-4">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{error2}</AlertDescription>
               </Alert>
             )}
 
@@ -219,6 +309,84 @@ function Admin() {
               ))}
               {venues.length === 0 && (
                 <div className="text-gray-500 text-center">No venues found</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Search and Manage Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Enter User Name"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <Button
+                onClick={() => {
+                  handleSearchUser(userName);
+                }}
+                className="w-full"
+              >
+                Search User
+              </Button>
+
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {success && (
+                <Alert className="mt-4">
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+              )}
+
+              {users && users.length > 0 && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Invoice</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  {users.map((user, index) => (
+                    <TableBody key={index}>
+                      <TableRow>
+                        <TableCell>{user.name}</TableCell>
+                        <TableCell>{user.userAddress}</TableCell>
+                        {user.isFlagged ? (
+                          <Button
+                            onClick={() => {
+                              handleRemoveFlag(user.userAddress);
+                            }}
+                          >
+                            Unflag
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => {
+                              handleFlagUser(user.userAddress);
+                            }}
+                          >
+                            Flag
+                          </Button>
+                        )}
+                      </TableRow>
+                    </TableBody>
+                  ))}
+                </Table>
               )}
             </div>
           </CardContent>

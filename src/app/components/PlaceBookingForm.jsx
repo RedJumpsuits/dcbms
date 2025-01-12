@@ -70,6 +70,7 @@ export default function PlaceBookingForm(props) {
   const [startOpen, setStartOpen] = useState(false);
   const [slots, setSlots] = useState();
   const [hour, setHour] = useState();
+  const [error, setError] = useState();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -98,13 +99,12 @@ export default function PlaceBookingForm(props) {
   const createBooking = async (values) => {
     try {
       const contract = await getContract(true);
-      const tx = await contract.createBooking({
-        venueId: venues.findIndex((venue) => venue.name === values.venue),
-        day: values.startDateTime.getTime()/ 1000,
-        hour: hour,
-      },
-      { value: parseEther("0.0005") }
-    );
+      const tx = await contract.createBooking(
+        venues.findIndex((venue) => venue.name === values.venue),
+        values.startDateTime.getTime() / 1000,
+        hour,
+        {value: parseEther("0.0005")}
+      );
       tx.console.log(await tx.wait());
     } catch (err) {
       console.error("Error placing booking:", err);
@@ -208,7 +208,7 @@ export default function PlaceBookingForm(props) {
                           venues.findIndex(
                             (venue) => venue.name === form.getValues("venue")
                           ),
-                          date.getUTCDate()
+                          date.getTime() / 1000
                         );
                         setStartDate(date);
                         setStartOpen(false);

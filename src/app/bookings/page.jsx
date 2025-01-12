@@ -16,6 +16,8 @@ export default function BookingPage() {
     return new ethers.BrowserProvider(window.ethereum);
   };
 
+  const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+  const CONTRACT_ABI = JSON.parse(process.env.NEXT_PUBLIC_ABI || "[]");
   // Get contract instance helper function
   const getContract = async (withSigner = false) => {
     const provider = await getProvider();
@@ -25,8 +27,7 @@ export default function BookingPage() {
     }
     return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
   };
-  const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
-  const CONTRACT_ABI = JSON.parse(process.env.NEXT_PUBLIC_ABI || "[]");
+  
   const { account, connectToMetaMask } = useContext(MetaMaskContext);
   const [error, setError] = useState("");
   const [venues, setVenues] = useState([]);
