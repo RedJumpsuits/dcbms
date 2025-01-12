@@ -6,6 +6,14 @@ import InteractiveHoverButton from "@/components/ui/interactive-hover-button";
 import GetStarted from "./components/getStarted";
 import Particles from "@/components/ui/particles";
 export default function Home() {
+
+  const handleGetStartedClick = () => {
+    const element = document.getElementById("get-started");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="pt-20">
       <motion.div
@@ -36,6 +44,7 @@ export default function Home() {
             <InteractiveHoverButton
               text={"Get Started"}
               className="w-[200px]"
+              onClick={handleGetStartedClick} 
             />
           </div>
         </div>

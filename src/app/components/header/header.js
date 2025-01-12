@@ -16,7 +16,9 @@ export default function Header() {
       <div className="flex items-center gap-4">
         <Link href="/" className="text-2xl font-bold">ReserveX</Link>
         <Link href="/">Home</Link>
-        <Link href="/about">About</Link>
+        {/* <Link href="/about">About</Link> */}
+        <Link href="/bookings">Book</Link>
+        <Link href="/scanqr">Checkin</Link>
       </div>
       <div className="flex gap-4 items-center justify-around">
         {!account && (
@@ -24,7 +26,7 @@ export default function Header() {
             {isConnecting ? "Connecting..." : "Connect to MetaMask"}
           </Button>
         )}
-        {account && <div>Account Connected: {account}</div>}
+        {account && <div>Account Connected</div>}
       </div>
     </div>
   );

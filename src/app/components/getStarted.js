@@ -17,7 +17,7 @@ function GetStarted() {
         className={"text-xl"}
         text="Our platform transforms campus resource management at NITK by using blockchain and AI. It offers a seamless way for students and faculty to book sports facilities, labs, and library slots, ensuring tamper-proof bookings and accountability through ETH staking to minimize no-shows."
       />
-      <div className="grid grid-cols-4 gap-4 px-32 z-0">
+      <section className="grid grid-cols-4 gap-4 px-32 z-0" id="get-started">
         <MagicCard>
           <div>
             <CardHeader>
@@ -79,7 +79,7 @@ function GetStarted() {
             </CardContent>
           </div>
         </MagicCard>
-      </div>
+      </section>
     </div>
   );
 }

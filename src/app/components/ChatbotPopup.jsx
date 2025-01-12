@@ -9,7 +9,7 @@ export default function ChatbotPopup() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="fixed bottom-4 right-4">
+    <div className="fixed bottom-4 right-4 z-[999]">
       {isOpen ? (
         <Card className="flex flex-col w-[25vw] h-[50vh]">
           <div className="flex justify-between items-center p-4 border-b">

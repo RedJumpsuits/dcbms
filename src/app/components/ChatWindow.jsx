@@ -34,12 +34,12 @@ export default function ChatWindow() {
       { id: messages.length, role: "user", content: input },
       { id: messages.length + 1, role: "bot", content: answer },
     ]);
-    setIsTyping(false);
+    setIsTyping(false);fixed 
     setMessage("");
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full z-[999]">
       <ScrollArea className="flex-grow p-4">
         {messages.map((message) => (
           <div
@@ -56,7 +56,7 @@ export default function ChatWindow() {
               }`}
             >
               {message.role === "bot" ? (
-                <TypingAnimation className={"text-sm"} duration={50}>
+                <TypingAnimation className={"text-sm"} duration={20}>
                   {message.content}
                 </TypingAnimation>
               ) : (

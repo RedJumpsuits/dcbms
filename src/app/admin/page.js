@@ -24,7 +24,7 @@ function Admin() {
   const CONTRACT_ABI = JSON.parse(process.env.NEXT_PUBLIC_ABI || "[]");
 
   // State management
-  const { account, connectToMetaMask } = useContext(MetaMaskContext);
+  const { account, connectToMetaMask, isAdmin } = useContext(MetaMaskContext);
   const [venueName, setVenueName] = useState("");
   const [capacity, setCapacity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -32,8 +32,9 @@ function Admin() {
   const [error, setError] = useState("");
   const [error2, setError2] = useState("");
   const [success, setSuccess] = useState("");
+  const [success2, setSuccess2] = useState("");
   const [venues, setVenues] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState("");
   const [userAddress, setUserAddress] = useState("");
   const [users, setUsers] = useState([]);
@@ -59,35 +60,9 @@ function Admin() {
   // Check admin status when account changes
   useEffect(() => {
     if (account) {
-      console.log("Account detected:", account);
-      checkAdminStatus(account);
       loadVenues();
     }
   }, [account]);
-
-  const checkAdminStatus = async (account) => {
-    try {
-      if (!account) {
-        throw new Error("Please connect to MetaMask to use this application");
-      }
-      console.log("Checking admin status for account:", account);
-
-      const contract = await getContract(true);
-
-      const adminAddress = await contract.getAdminAddress();
-      const provider = await getProvider();
-      const signer = await provider.getSigner();
-      const currentAddress = await signer.getAddress();
-
-      console.log("Admin address:", adminAddress);
-      console.log("Current address:", currentAddress);
-
-      setIsAdmin(adminAddress.toLowerCase() === currentAddress.toLowerCase());
-    } catch (error) {
-      console.error("Error checking admin status:", error);
-      setError(error.message);
-    }
-  };
 
   const loadVenues = async () => {
     try {
@@ -168,7 +143,7 @@ function Admin() {
     try {
       setLoading(true);
       setError("");
-      setSuccess("");
+      setSuccess2("");
 
       if (!address) {
         throw new Error("Please enter a user address");
@@ -178,7 +153,7 @@ function Admin() {
 
       // Call the smart contract function to remove flag
       await contract.removeDamageFlag(address);
-      setSuccess(`Successfully removed flag from user ${address}`);
+      setSuccess2(`Successfully removed flag from user ${address}`);
       setUserAddress("");
     } catch (err) {
       setError(err.message || "Failed to remove user flag");
@@ -187,26 +162,12 @@ function Admin() {
     }
   };
 
-  const handleSearchUser = async (name) => {
-    await loadUsersByName(name);
-
-    if (userName.trim()) {
-      const user = users.find((user) =>
-        user.name.toLowerCase().includes(userName.toLowerCase())
-      );
-      if (user) {
-        setUserAddress(user.address);
-      } else {
-        setError2("User not found");
-      }
-    }
-  };
 
   const handleFlagUser = async (address) => {
     try {
       setLoading(true);
       setError("");
-      setSuccess("");
+      setSuccess2("");
 
       if (!address) {
         throw new Error("Please enter a user address");
@@ -215,7 +176,7 @@ function Admin() {
       const contract = await getContract(true);
       // Call the smart contract function to flag user
       await contract.flagDamagedProperty(address);
-      setSuccess(`Successfully flagged user ${address}`);
+      setSuccess2(`Successfully flagged user ${address}`);
       setUserAddress("");
     } catch (err) {
       setError(err.message || "Failed to flag user");
@@ -239,105 +200,43 @@ function Admin() {
   }
 
   return (
-    <div className="mt-20 px-32">
-      <h1 className="text-4xl font-bold">Welcome to the admin page</h1>
-      <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New Venue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Input
-                  type="text"
-                  placeholder="Venue Name"
-                  value={venueName}
-                  onChange={(e) => setVenueName(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Input
-                  type="number"
-                  placeholder="Capacity"
-                  value={capacity}
-                  onChange={(e) => setCapacity(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="mr-2 h-4 w-4" />
-                )}
-                Add Venue
-              </Button>
-            </form>
-
-            {error && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertDescription>{error2}</AlertDescription>
-              </Alert>
-            )}
-
-            {success && (
-              <Alert className="mt-4">
-                <AlertDescription>{success}</AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Existing Venues</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {venues.map((venue, index) => (
-                <div key={index} className="p-4 border rounded-lg">
-                  <div className="font-medium">{venue.name}</div>
-                  <div className="text-sm text-gray-500">
-                    Capacity: {venue.capacity.toString()}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Status: {venue.isActive ? "Active" : "Inactive"}
-                  </div>
+    <div className="mt-20 px-32 flex flex-col">
+      <h1 className="text-3xl font-bold text-center">Admin Panel</h1>
+      <div className="flex gap-4">
+        <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Add New Venue</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Input
+                    type="text"
+                    placeholder="Venue Name"
+                    value={venueName}
+                    onChange={(e) => setVenueName(e.target.value)}
+                    className="w-full"
+                  />
                 </div>
-              ))}
-              {venues.length === 0 && (
-                <div className="text-gray-500 text-center">No venues found</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Search and Manage Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Input
-                  type="text"
-                  placeholder="Enter User Name"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <Button
-                onClick={() => {
-                  handleSearchUser(userName);
-                }}
-                className="w-full"
-              >
-                Search User
-              </Button>
+                <div>
+                  <Input
+                    type="number"
+                    placeholder="Capacity"
+                    value={capacity}
+                    onChange={(e) => setCapacity(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <Button type="submit" disabled={isLoading} className="w-full">
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="mr-2 h-4 w-4" />
+                  )}
+                  Add Venue
+                </Button>
+              </form>
 
               {error && (
                 <Alert variant="destructive" className="mt-4">
@@ -350,47 +249,113 @@ function Admin() {
                   <AlertDescription>{success}</AlertDescription>
                 </Alert>
               )}
+            </CardContent>
+          </Card>
 
-              {users && users.length > 0 && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">Invoice</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  {users.map((user, index) => (
-                    <TableBody key={index}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Existing Venues</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {venues.map((venue, index) => (
+                  <div key={index} className="p-4 border rounded-lg">
+                    <div className="font-medium">{venue.name}</div>
+                    <div className="text-sm text-gray-500">
+                      Capacity: {venue.capacity.toString()}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Status: {venue.isActive ? "Active" : "Inactive"}
+                    </div>
+                  </div>
+                ))}
+                {venues.length === 0 && (
+                  <div className="text-gray-500 text-center">
+                    No venues found
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Search and Manage Users</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Input
+                    type="text"
+                    placeholder="Enter User Name"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <Button
+                  onClick={() => {
+                    loadUsersByName(userName);
+                  }}
+                  className="w-full"
+                >
+                  Search User
+                </Button>
+
+                {error2 && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertDescription>{error2}</AlertDescription>
+                  </Alert>
+                )}
+
+                {success2 && (
+                  <Alert className="mt-4">
+                    <AlertDescription>{success2}</AlertDescription>
+                  </Alert>
+                )}
+
+                {users && users.length > 0 && (
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell>{user.name}</TableCell>
-                        <TableCell>{user.userAddress}</TableCell>
-                        {user.isFlagged ? (
-                          <Button
-                            onClick={() => {
-                              handleRemoveFlag(user.userAddress);
-                            }}
-                          >
-                            Unflag
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={() => {
-                              handleFlagUser(user.userAddress);
-                            }}
-                          >
-                            Flag
-                          </Button>
-                        )}
+                        <TableHead className="w-[100px]">Name</TableHead>
+                        <TableHead>Address</TableHead>
+                        <TableHead>Flagged?</TableHead>
                       </TableRow>
-                    </TableBody>
-                  ))}
-                </Table>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                    </TableHeader>
+                    {users.map((user, index) => (
+                      <TableBody key={index}>
+                        <TableRow>
+                          <TableCell>{user.name}</TableCell>
+                          <TableCell>{user.userAddress}</TableCell>
+                          {user.isFlagged ? (
+                            <div className="bg-red-500 text-white text-center rounded p-1 m-1 cursor-pointer hover:scale-[1.05] transition-all duration-300"
+                              onClick={() => {
+                                handleRemoveFlag(user.userAddress);
+                              }}
+                            >
+                              Unflag
+                            </div>
+                          ) : (
+                            <div className="bg-green-500 text-white text-center rounded p-1 m-1 cursor-pointer hover:scale-[1.05] transition-all duration-300"
+                              onClick={() => {
+                                handleFlagUser(user.userAddress);
+                              }}
+                            >
+                              Flag
+                            </div>
+                          )}
+                        </TableRow>
+                      </TableBody>
+                    ))}
+                  </Table>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

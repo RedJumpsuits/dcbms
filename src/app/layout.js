@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
     <MetaMaskProvider>
       <html lang="en">
         <body
-          className={`${montserrat} ${geistSans.variable} ${geistMono.variable} min-h-screen relative antialiased dark`}
+          className={`${montserrat} ${geistSans.variable} ${geistMono.variable} min-h-screen overflow-x-hidden relative antialiased dark`}
         >
           <Header />
           {children}

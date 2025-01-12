@@ -8,6 +8,7 @@ export const MetaMaskProvider = ({ children }) => {
   const [name, setName] = useState(null);
   const [registerNumber, setRegisterNumber] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
   const CONTRACT_ABI = JSON.parse(process.env.NEXT_PUBLIC_ABI || "[]");
@@ -27,6 +28,26 @@ export const MetaMaskProvider = ({ children }) => {
       return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
     }
     return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  };
+
+  const checkAdminStatus = async () => {
+    try {
+      if (account) {
+        const contract = await getContract(true);
+
+        const adminAddress = await contract.getAdminAddress();
+        const provider = await getProvider();
+
+        console.log("Admin address:", adminAddress);
+        console.log("Current address:", account);
+        setIsAdmin(adminAddress.toLowerCase() === account);
+      }
+
+      
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setError(error.message);
+    }
   };
 
   const connectToMetaMask = async () => {
@@ -53,8 +74,6 @@ export const MetaMaskProvider = ({ children }) => {
       setName(userDetails.name);
       setRegisterNumber(userDetails.registerNumber);
     }
-
-    
   };
 
   useEffect(() => {
@@ -66,6 +85,12 @@ export const MetaMaskProvider = ({ children }) => {
       setUserDetails();
     }
   }, [account, name, registerNumber]);
+
+  useEffect(() => {
+    if (account) {
+      checkAdminStatus();
+    }
+  }, [account]);
 
   useEffect(() => {
     const restoreConnection = async () => {
@@ -88,7 +113,7 @@ export const MetaMaskProvider = ({ children }) => {
 
   return (
     <MetaMaskContext.Provider
-      value={{ account, isConnecting, connectToMetaMask }}
+      value={{ account, isConnecting, connectToMetaMask, isAdmin, name, registerNumber }}
     >
       {children}
     </MetaMaskContext.Provider>

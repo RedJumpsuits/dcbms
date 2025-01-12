@@ -82,7 +82,7 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="container flex justify-center items-center w-full h-[100vh] mx-auto pt-20 p-4">
+    <div className="container flex justify-center items-center w-full mx-auto pt-20 p-4">
       <Card className="p-8 w-[80vh]">
         <CardHeader>
           <CardTitle>Book a venue</CardTitle>
