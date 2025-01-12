@@ -27,10 +27,21 @@ const Home = () => {
     const [data, setData] = useState(null);
 
     const submitToBlockchain = async (venueId, timestamp) => {
-        const day = Math.floor(timestamp / 86400);
+        const date = new Date(timestamp * 1000 - 5*60*1000);
+
+        date.setMinutes(0);
+        date.setSeconds(0);
+        date.setMilliseconds(0);
+        date.setHours(0)
+
+        const day = Math.floor(date.getTime() / 1000);
+
+
         const hour = Math.floor((timestamp % 86400) / 3600);
 
         const contract = await getContract(true);
+
+        console.log(hour, day, venueId);
 
         try {
             const tx = await contract.checkout(venueId, day, hour);
@@ -38,6 +49,7 @@ const Home = () => {
             console.log('Transaction hash:', tx.hash);
             await tx.wait();
             console.log('Transaction confirmed');
+            
         } catch (error) {
             console.error('Error submitting to blockchain:', error);
         }
@@ -47,6 +59,7 @@ const Home = () => {
         setData(data);
         const { venueId, timeStamp } = data;
         submitToBlockchain(venueId, timeStamp);
+        // window.location.href = "/";
     };
 
     return (

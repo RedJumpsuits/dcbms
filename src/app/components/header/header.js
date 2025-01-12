@@ -18,7 +18,7 @@ export default function Header() {
         <Link href="/">Home</Link>
         {/* <Link href="/about">About</Link> */}
         <Link href="/bookings">Book</Link>
-        <Link href="/scanqr">Checkin</Link>
+        <Link href="/scanqr">Check Out</Link>
       </div>
       <div className="flex gap-4 items-center justify-around">
         {!account && (
