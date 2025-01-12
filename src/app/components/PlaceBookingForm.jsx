@@ -120,6 +120,8 @@ export default function PlaceBookingForm(props) {
   function onSubmit(values) {
     console.log(values);
     createBooking(values);
+    window.location.href = "/";
+    alert("Booking successful");
   }
 
   return (
