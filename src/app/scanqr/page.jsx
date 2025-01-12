@@ -33,7 +33,7 @@ export default function ScanQRPage() {
 
     // Request camera access
     navigator.mediaDevices
-      .getUserMedia({ video: true })
+      .getUserMedia({ video: {facingMode: "environment"} })
       .then((stream) => {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
