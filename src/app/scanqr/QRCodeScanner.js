@@ -1,46 +1,46 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 
-const QRCodeScanner = ({ onScan }) => {
-  const [scanner, setScanner] = useState(null);
+// Dynamically import the QRReader component to avoid SSR issues
+const QrReader = dynamic(() => import('react-qr-reader'), { ssr: false });
 
-  useEffect(() => {
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      false
-    );
-    html5QrcodeScanner.render(onScanSuccess);
-    setScanner(html5QrcodeScanner);
+const QRReader = () => {
+  const [qrData, setQrData] = useState('');
+  const [error, setError] = useState('');
 
-    return () => {
-      if (scanner) {
-        scanner.clear();
-      }
-    };
-  }, []);
-
-  const onScanSuccess = (decodedText) => {
-    const data = JSON.parse(decodedText);
-    console.log(`Scanned data: ${decodedText}`); // Log the decoded text
-    onScan(data);
-
-    // Stop the scanner after a successful scan
-    if (scanner) {
-      scanner.clear().then(() => {
-        console.log("Scanner stopped");
-      }).catch((error) => {
-        console.error("Failed to stop scanner", error);
-      });
+  const handleScan = (data) => {
+    if (data) {
+      setQrData(data);
     }
   };
 
+  const handleError = (err) => {
+    console.error(err);
+    setError('An error occurred while scanning. Please try again.');
+  };
+
   return (
-    <div>
-      <div id="reader" className="mx-auto w-full" style={{ width: "500px" }}></div>
+    <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+      <h1>QR Code Reader</h1>
+      <QrReader
+        delay={300}
+        onError={handleError}
+        onScan={handleScan}
+        style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+      />
+      {qrData && (
+        <div style={{ marginTop: '1rem' }}>
+          <h3>Scanned Data:</h3>
+          <p>{qrData}</p>
+        </div>
+      )}
+      {error && (
+        <div style={{ marginTop: '1rem', color: 'red' }}>
+          <p>{error}</p>
+        </div>
+      )}
     </div>
   );
 };
 
-export default QRCodeScanner;
+export default QRReader;
