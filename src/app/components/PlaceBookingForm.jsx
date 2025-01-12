@@ -238,39 +238,57 @@ export default function PlaceBookingForm(props) {
               <>
                 {slots && (
                   <div className="flex flex-wrap items-center justify-center gap-4">
-                    {slots.timeSlots.map((slot, index) => (
-                      <Card
-                        style={{ cursor: "pointer" }}
-                        className={`p-0 ${
-                          field.value == slot ? "bg-green-400" : ""
-                        } ${slots.userBookedAny[index] ? "bg-gray-400" : ""}`}
-                        key={index}
-                        onClick={
-                          slots.userBookedAny[index]
-                            ? () => {
-                                alert("You have already booked this slot");
-                              }
-                            : () => {
-                                if (field.value == slot) {
-                                  field.onChange(null);
-                                } else {
-                                  field.onChange(slot);
+                    {slots.timeSlots
+                      .filter((slot) => {
+                        let s =
+                          (form.getValues("startDateTime").getDate() ==
+                            new Date().getDate() &&
+                            Number.parseInt(slot) > new Date().getHours()) ||
+                          form.getValues("startDateTime").getDate() !=
+                            new Date().getDate();
+                        console.log(
+                          Number.parseInt(slot),
+                          Number.parseInt(slot) > new Date().getHours(),
+                          form.getValues("startDateTime") ==
+                            new Date().getDate()
+                        );
+                        console.log(form.getValues("startDateTime"));
+
+                        return s;
+                      })
+                      .map((slot, index) => (
+                        <Card
+                          style={{ cursor: "pointer" }}
+                          className={`p-0 ${
+                            field.value == slot ? "bg-green-400" : ""
+                          } ${slots.userBookedAny[index] ? "bg-gray-400" : ""}`}
+                          key={index}
+                          onClick={
+                            slots.userBookedAny[index]
+                              ? () => {
+                                  alert("You have already booked this slot");
                                 }
-                              }
-                        }
-                      >
-                        <CardHeader>
-                          <CardTitle>
-                            {slots.remainingSlots[index]} /{" "}
-                            {slots.remainingSlots[index] +
-                              slots.bookedSlots[index]}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          {tConvert(slot.toString().padStart(2, "0"))}
-                        </CardContent>
-                      </Card>
-                    ))}
+                              : () => {
+                                  if (field.value == slot) {
+                                    field.onChange(null);
+                                  } else {
+                                    field.onChange(slot);
+                                  }
+                                }
+                          }
+                        >
+                          <CardHeader>
+                            <CardTitle>
+                              {slots.remainingSlots[index]} /{" "}
+                              {slots.remainingSlots[index] +
+                                slots.bookedSlots[index]}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            {tConvert(slot.toString().padStart(2, "0"))}
+                          </CardContent>
+                        </Card>
+                      ))}
                   </div>
                 )}
               </>
