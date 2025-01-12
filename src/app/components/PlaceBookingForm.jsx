@@ -119,7 +119,7 @@ export default function PlaceBookingForm(props) {
 
   function onSubmit(values) {
     console.log(values);
-    // createBooking(values);
+    createBooking(values);
   }
 
   return (
